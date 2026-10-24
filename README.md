@@ -21,6 +21,8 @@ Extension Chrome tự điền đáp án bài **Kiểm tra quy chế kỳ 2026.1 
 3. Bật **Chế độ nhà phát triển** (Developer mode).
 4. Bấm **Tải tiện ích đã giải nén** (Load unpacked) và chọn thư mục vừa giải nén.
 
+> ⚠️ Phải chọn đúng thư mục **chứa file `manifest.json`**. Nếu Chrome báo *"Manifest file is missing or unreadable"*, nghĩa là bạn đang chọn thư mục bao ngoài: hãy mở vào trong và chọn thư mục có `manifest.json`.
+
 ## Sử dụng
 
 1. Mở link form và đăng nhập tài khoản trường.
