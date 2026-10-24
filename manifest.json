@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "MS Forms - Tự điền đáp án Quy chế 2026.1",
+  "version": "1.0",
+  "description": "Tự chọn đáp án cho bài kiểm tra quy chế trên Microsoft Forms (khớp theo nội dung câu hỏi/đáp án).",
+  "content_scripts": [
+    {
+      "matches": [
+        "https://forms.cloud.microsoft/*",
+        "https://forms.office.com/*",
+        "https://forms.microsoft.com/*"
+      ],
+      "js": ["answers.js", "content.js"],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ]
+}

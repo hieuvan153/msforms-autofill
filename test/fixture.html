@@ -1,0 +1,62 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>MS Forms fixture</title>
+<body>
+<div id="form"></div>
+<script src="../answers.js"></script>
+<script>
+  // Mimics Microsoft Forms markup: questionItem > questionTitle > .text-format-content, choiceItem > radio(value=text)
+  const pick = [0, 3, 6, 41, 199, 20, 117].map((i) => ANSWERS[i]); // 20, 117: numeric answers like "4.000.000đ"
+  const cases = [
+    ...pick.map((a) => ({ q: a.question, right: a.answer })),
+    { q: ANSWERS[10].question.replace("Sinh viên", "SV").replace(/\?$/, " ?"), right: ANSWERS[10].answer }, // reworded
+    // near-duplicate pair #189/#193: slightly reworded #193 must still get #193's answer
+    { q: ANSWERS[192].question.replace(/\?$/, "") + " ạ?", right: ANSWERS[192].answer, extra: ANSWERS[188].answer },
+    { q: "Câu hỏi không có trong ngân hàng đề về thời tiết hôm nay?", right: null },
+  ];
+  // Word order inside the question: fully shuffle the words ("A B C D?" -> "C A D B?").
+  const rotate = (q) => q.replace(/\?$/, "").split(" ").sort(() => Math.random() - 0.5).join(" ") + "?";
+  // Near-duplicate pairs (ids) with different answers: reorder one, offer the sibling's answer as a distractor.
+  for (const [x, y] of [[189, 193], [57, 66], [28, 116], [61, 150], [3, 190], [42, 120]]) {
+    for (const [i, j] of [[x - 1, y - 1], [y - 1, x - 1]]) {
+      if (ANSWERS[i].answer === ANSWERS[j].answer) continue;
+      cases.push({ q: rotate(ANSWERS[i].question), right: ANSWERS[i].answer, extra: ANSWERS[j].answer });
+    }
+  }
+  [50, 100, 150].forEach((i) => cases.push({ q: rotate(ANSWERS[i].question), right: ANSWERS[i].answer }));
+  // Question order: shuffle like the real form does on every load.
+  cases.sort(() => Math.random() - 0.5);
+  const form = document.getElementById("form");
+  cases.forEach((c, n) => {
+    // Same-shape numeric distractors (e.g. "3.000.000đ ...") are what the real form uses.
+    const numeric = c.right && /^\d/.test(c.right) ? ["1", "2", "3"].map((d) => c.right.replace(/^\d/, (x) => (x === d ? "9" : d))) : null;
+    const others = numeric || ANSWERS.filter((a) => a.answer !== c.right).slice(n * 3, n * 3 + 3).map((a) => a.answer).concat(c.extra || []);
+    const opts = (c.right ? [...others, c.right] : others).sort(() => Math.random() - 0.5);
+    form.insertAdjacentHTML("beforeend", `
+      <div data-automation-id="questionItem" data-right="${c.right ? c.right.replace(/"/g, "&quot;") : ""}">
+        <div data-automation-id="questionTitle"><span data-automation-id="questionOrdinal">${n + 1}.</span>
+          <span class="text-format-content">${c.q}</span><span>*</span></div>
+        <div role="radiogroup">${opts.map((o) => `
+          <div data-automation-id="choiceItem"><label><input type="radio" name="q${n}" value="${o.replace(/"/g, "&quot;")}">
+            <span class="text-format-content">${o}</span></label></div>`).join("")}
+        </div>
+      </div>`);
+  });
+</script>
+<script src="../content.js"></script>
+<script>
+  // Self-check: every known question has its right option checked; the unknown one has nothing checked.
+  setTimeout(() => {
+    const bad = [...document.querySelectorAll('[data-automation-id="questionItem"]')].filter((b) => {
+      const checked = b.querySelector("input:checked");
+      return b.dataset.right ? !checked || checked.value !== b.dataset.right : !!checked;
+    });
+    window.failures = bad.map((b) => ({
+      q: b.querySelector(".text-format-content").textContent,
+      picked: b.querySelector("input:checked")?.value,
+      right: b.dataset.right,
+      note: b.title,
+    }));
+    document.title = bad.length ? "FAIL " + bad.length : "PASS";
+  }, 1200);
+</script>
